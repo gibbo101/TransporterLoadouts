@@ -40,7 +40,7 @@ namespace TransporterLoadouts
 
         private static Texture2D autoLoadIcon;
         internal static Texture2D AutoLoadIcon =>
-            autoLoadIcon ?? (autoLoadIcon = ContentFinder<Texture2D>.Get("UI/Commands/LoadTransporter"));
+            autoLoadIcon ?? (autoLoadIcon = ContentFinder<Texture2D>.Get("UI/Commands/AutoLoadDefaultCargo"));
         private static Texture2D cancelIcon;
         internal static Texture2D CancelIcon =>
             cancelIcon ?? (cancelIcon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel"));
