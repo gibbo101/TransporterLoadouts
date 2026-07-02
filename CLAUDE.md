@@ -59,8 +59,12 @@ Full design + build status: `DESIGN.md` (in this folder). Sibling mod: **Crew Pr
 1. ✅ `CompDefaultCargo` + comp injection.
 2. ✅ Auto-fill on open + "Default cargo" button (Fill / Save / Clear).
 3. ✅ MP sync pass on the manifest edits.
-4. ⬜ **Slice 2:** unloading keeps the default cargo aboard (patch the player `CancelLoad` path,
-   not the launch path — see DESIGN.md for the mechanism + edge cases).
+4. ⬜ **Slice 2:** unloading can keep the default cargo aboard. **Left-click Unload = vanilla (dump all,
+   untouched); right-click Unload = "Unload all except default cargo"** (keep defaults). Additive only:
+   postfix `CompGetGizmosExtra` to ADD a `rightClickFloatMenuOptions` entry → synced
+   `CargoActions.UnloadKeepingDefaults(Thing)`; divert via a keep-flag-gated Prefix on
+   `CleanUpLoadingVars` (NOT the vanilla left-click / launch / leave paths). See DESIGN.md for the full
+   mechanism + edge cases (esp. confirm launch doesn't route through `CancelLoad()`).
 5. ⬜ In-game test; then GitHub repo + Workshop prep when Luke asks.
 
 ## Remaining / open questions

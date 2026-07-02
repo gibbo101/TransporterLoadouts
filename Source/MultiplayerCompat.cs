@@ -16,9 +16,17 @@ namespace TransporterLoadouts
             if (!MP.enabled) return;
             MP.RegisterSyncMethod(typeof(CargoActions), nameof(CargoActions.SetDefaultCargo));
             MP.RegisterSyncMethod(typeof(CargoActions), nameof(CargoActions.ClearDefaultCargo));
+            MP.RegisterSyncMethod(typeof(CargoActions), nameof(CargoActions.UnloadAll));
+            MP.RegisterSyncMethod(typeof(CargoActions), nameof(CargoActions.UnloadKeepingDefaults));
+            MP.RegisterSyncMethod(typeof(CargoActions), nameof(CargoActions.SetAutoLoad));
         }
 
         // For UI side-effects inside synced methods: only the issuing client shows them.
         public static bool ShowUiForThisClient => !MP.enabled || MP.IsExecutingSyncCommandIssuedBySelf;
+
+        // True while in an actual multiplayer session. Used to keep sim-tick auto-load
+        // deterministic: mod settings are per-machine (not synced), so sim code must not branch
+        // on them in MP - it falls back to the fixed on-colony / off-elsewhere default instead.
+        public static bool InMultiplayer => MP.enabled && MP.IsInMultiplayer;
     }
 }
