@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Transporter Loadouts</name>
+  <author>Luke</author>
+  <packageId>luke.transporterloadouts</packageId>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <description>Every transporter and shuttle remembers its own default cargo. Set up a shuttle once as a supply runner - "50 meals + 100 chemfuel" - and that manifest is pre-filled every time you open its load dialog, so you never re-tick the same items again.
+
+Each transporter keeps its own loadout, so one can be your supply runner and another your artillery drop. Loadouts are stored in the save, per shuttle.
+
+- Open a transporter's load dialog and its saved default cargo is filled in automatically (clamped to what you have on the map).
+- Save the current item selection as that transporter's default with one click, or clear it.
+- Unloading a shuttle keeps its default cargo aboard, so you don't reload the basics every mission.
+
+Works with the vanilla load dialog, so it covers drop pods, shuttles (including modded craft) - anything with a transporter comp. No DLC required.
+
+MULTIPLAYER
+Built with the Multiplayer mod in mind; loadout changes are synced. Runs fine without Multiplayer installed.</description>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>Ludeon.RimWorld</li>
+    <!-- Optional: when present, load after Multiplayer so its API is initialized before our
+         StaticConstructorOnStartup registers sync methods. Not a dependency - the mod runs fine
+         without Multiplayer (the API stub reports MP.enabled = false). -->
+    <li>rwmt.Multiplayer</li>
+  </loadAfter>
+</ModMetaData>

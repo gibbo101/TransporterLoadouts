@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>TransporterLoadouts</AssemblyName>
+    <Nullable>disable</Nullable>
+    <Optimize>true</Optimize>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" ExcludeAssets="runtime" />
+    <!-- MP sync for loadout edits. The API stub DLL must ship in Assemblies/ (see CopyToMod)
+         or the mod fails to load even in singleplayer. -->
+    <PackageReference Include="RimWorld.MultiplayerAPI" Version="0.5.0" />
+  </ItemGroup>
+
+  <!-- Use Krafs.Rimworld.Ref's reference assemblies instead of the .NET Framework dev pack. -->
+  <Target Name="RemoveFramework" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
+    <PropertyGroup>
+      <TargetFrameworkDirectory></TargetFrameworkDirectory>
+    </PropertyGroup>
+  </Target>
+
+  <!-- Drop the built DLL into the mod's Assemblies/ folder. Also ship the MultiplayerAPI stub
+       (0MultiplayerAPI.dll): our assembly references it, so it must be present at runtime or the
+       mod won't load at all. The "0" prefix makes RimWorld load it before our DLL. When the
+       Multiplayer mod is absent, the stub's MP.enabled returns false and our sync code no-ops. -->
+  <Target Name="CopyToMod" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+          DestinationFolder="$(ProjectDir)..\Assemblies\" />
+    <Copy SourceFiles="$(OutputPath)0MultiplayerAPI.dll"
+          DestinationFolder="$(ProjectDir)..\Assemblies\" />
+  </Target>
+
+</Project>
