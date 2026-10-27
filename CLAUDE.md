@@ -1,6 +1,6 @@
 # CLAUDE.md — Transporter Loadouts
 
-A RimWorld 1.6 mod: every transporter/shuttle remembers **its own** default cargo manifest,
+A RimWorld 1.6 / 1.7 mod: every transporter/shuttle remembers **its own** default cargo manifest,
 pre-filled when you open its load dialog. Per-instance, save-specific. This file is
 mod-specific; the **workspace** `../CLAUDE.md` (global RimWorld rules) also applies — on
 conflict, this file wins.
@@ -48,8 +48,9 @@ Full design + build status: `DESIGN.md` (in this folder). Sibling mod: **Crew Pr
   field names (`def`, `count`) — breaks existing saves.
 
 ## Build / deploy / test
-- `cd Source && dotnet build -c Release` (.NET 10 SDK → net48). `CopyToMod` drops both DLLs into
-  `Assemblies/` (gitignored).
+- `cd Source && dotnet build -c Release` builds both targets: net48 → `1.6/Assemblies/` and net10.0 →
+  `1.7/Assemblies/` (gitignored), each with `0MultiplayerAPI.dll`. 1.7 is Ludeon's own engine on .NET 10:
+  Harmony 3.x, no `RemoveFramework`.
 - Deploy: `robocopy <thisFolder> "D:\SteamLibrary\steamapps\common\RimWorld\Mods\TransporterLoadouts" /MIR /XD Source obj bin .git /R:20 /W:5`
   (DLL is user-locked while RimWorld runs — `/R` retries until you exit; verify with
   `Get-FileHash`). C# changes need a full game restart.
@@ -59,13 +60,15 @@ Full design + build status: `DESIGN.md` (in this folder). Sibling mod: **Crew Pr
 1. ✅ `CompDefaultCargo` + comp injection.
 2. ✅ Auto-fill on open + "Default cargo" button (Fill / Save / Clear).
 3. ✅ MP sync pass on the manifest edits.
-4. ⬜ **Slice 2:** unloading can keep the default cargo aboard. **Left-click Unload = vanilla (dump all,
-   untouched); right-click Unload = "Unload all except default cargo"** (keep defaults). Additive only:
-   postfix `CompGetGizmosExtra` to ADD a `rightClickFloatMenuOptions` entry → synced
-   `CargoActions.UnloadKeepingDefaults(Thing)`; divert via a keep-flag-gated Prefix on
-   `CleanUpLoadingVars` (NOT the vanilla left-click / launch / leave paths). See DESIGN.md for the full
-   mechanism + edge cases (esp. confirm launch doesn't route through `CancelLoad()`).
-5. ⬜ In-game test; then GitHub repo + Workshop prep when Luke asks.
+4. ✅ **Slice 2:** unloading can keep the default cargo aboard. The unload/cancel gizmo (only when a
+   default is saved): left-click = vanilla full unload, right-click = "Unload all except default cargo".
+   Both go through synced `CargoActions` (`UnloadAll` / `UnloadKeepingDefaults`); a keep-flag-gated prefix
+   on `CleanUpLoadingVars` diverts only the player-cancel path (launch/leave call it directly, untouched).
+5. ✅ **Slice 3:** auto-load default cargo. Per-transporter synced toggle gizmo (`CargoActions.SetAutoLoad`);
+   default follows map type (on for colony maps, off elsewhere; mod options `autoLoadColonyMaps` /
+   `autoLoadOtherMaps`, ignored in MP where the fixed default applies). A `CompTick` check every 250
+   ticks starts loading the manifest when idle on a home map.
+6. ✅ Published: Workshop **3756377821**, public repo **github.com/gibbo101/TransporterLoadouts** (MIT).
 
 ## Remaining / open questions
 - Filter granularity per entry (exact def vs category/"any meal"); stuff/quality handling.
