@@ -13,12 +13,15 @@ Each transporter keeps its own loadout, so one can be your supply runner and ano
 
 - Open a transporter's load dialog and its saved default cargo is filled in automatically (clamped to what you have on the map).
 - Save the current item selection as that transporter's default with one click, or clear it.
-- Unloading a shuttle keeps its default cargo aboard, so you don't reload the basics every mission.
+- Right-click Unload for "Unload all except default cargo": the basics stay aboard for the next trip. A normal click unloads everything as usual.
+- Auto-load: a toggle on each transporter has colonists load its default cargo whenever it sits idle on a home map. On by default for colony maps and off elsewhere; the default for each map type is in Mod Options.
 
 Works with the vanilla load dialog, so it covers drop pods, shuttles (including modded craft) - anything with a transporter comp. No DLC required.
 
 MULTIPLAYER
-Built with the Multiplayer mod in mind; loadout changes are synced. Runs fine without Multiplayer installed.</description>
+Built with the Multiplayer mod in mind; loadout changes are synced. Runs fine without Multiplayer installed.
+
+Supports RimWorld 1.6 and 1.7. Multiplayer isn't out for 1.7 yet.</description>
   <modDependencies>
     <li>
       <packageId>brrainz.harmony</packageId>
