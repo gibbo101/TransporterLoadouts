@@ -3,11 +3,11 @@ using Verse;
 
 namespace TransporterLoadouts
 {
-    // Registers loadout edits as sync methods when the Multiplayer mod is running. Filling a
-    // transporter's default cargo into an open dialog stays local (it only ticks rows; Accept
-    // is vanilla-synced). Saving/clearing a default mutates per-building state, so those sync
-    // as single calls addressed by the transporter Thing. When Multiplayer is absent, the
-    // shipped 0MultiplayerAPI stub reports MP.enabled = false and these no-op.
+    // Registers each public CargoActions method for sync when the Multiplayer mod is running:
+    // each mutates per-building state and syncs as a single call addressed by the transporter
+    // Thing. Filling default cargo into an open dialog stays local (it only ticks rows; Accept
+    // is vanilla-synced). When Multiplayer is absent, the shipped 0MultiplayerAPI stub reports
+    // MP.enabled = false and registration is skipped.
     [StaticConstructorOnStartup]
     public static class MultiplayerCompat
     {
@@ -24,9 +24,8 @@ namespace TransporterLoadouts
         // For UI side-effects inside synced methods: only the issuing client shows them.
         public static bool ShowUiForThisClient => !MP.enabled || MP.IsExecutingSyncCommandIssuedBySelf;
 
-        // True while in an actual multiplayer session. Used to keep sim-tick auto-load
-        // deterministic: mod settings are per-machine (not synced), so sim code must not branch
-        // on them in MP - it falls back to the fixed on-colony / off-elsewhere default instead.
+        // True while in an actual multiplayer session. Mod settings are per-machine and not
+        // synced, so sim code must not branch on them while this is true.
         public static bool InMultiplayer => MP.enabled && MP.IsInMultiplayer;
     }
 }

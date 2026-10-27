@@ -24,14 +24,14 @@ namespace TransporterLoadouts
             }
         }
 
-        // Set each manifest def's row toward its target count (auto-clamped to what's on the
-        // map). Returns the number of defs that couldn't be fully satisfied for a shortfall note.
+        // Sets each manifest def's row toward its target count (clamped to what's on the map).
+        // Returns the number of defs that couldn't be fully satisfied, for a shortfall note.
         public static int ApplyManifest(CompDefaultCargo comp, List<TransferableOneWay> transferables)
         {
             int shortfalls = 0;
             foreach (CargoEntry entry in comp.Manifest)
             {
-                TransferableOneWay row = transferables.FirstOrDefault(t => IsItem(t) && t.ThingDef == entry.def);
+                TransferableOneWay row = FindItemRow(transferables, entry.def);
                 if (row == null)
                 {
                     shortfalls++;
@@ -43,13 +43,13 @@ namespace TransporterLoadouts
             return shortfalls;
         }
 
-        // Green-tint test: every manifest def is filled to its target (or maxed out at what's
-        // available). Extra items the player added beyond the manifest don't matter.
+        // True when every manifest def is filled to its target, or to all that is available.
+        // Items selected beyond the manifest don't affect the result.
         public static bool DefaultsSatisfied(CompDefaultCargo comp, List<TransferableOneWay> transferables)
         {
             foreach (CargoEntry entry in comp.Manifest)
             {
-                TransferableOneWay row = transferables.FirstOrDefault(t => IsItem(t) && t.ThingDef == entry.def);
+                TransferableOneWay row = FindItemRow(transferables, entry.def);
                 if (row == null) return false;
                 int available = Available(row);
                 if (available <= 0) return false;
@@ -58,6 +58,10 @@ namespace TransporterLoadouts
             }
             return true;
         }
+
+        // The first item row for the def; rows of differing stuff or quality share a def.
+        private static TransferableOneWay FindItemRow(List<TransferableOneWay> transferables, ThingDef def) =>
+            transferables.FirstOrDefault(t => IsItem(t) && t.ThingDef == def);
 
         private static bool IsItem(TransferableOneWay t) =>
             t.HasAnyThing && !(t.AnyThing is Pawn);

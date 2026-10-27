@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -17,9 +16,9 @@ namespace TransporterLoadouts
             InjectComps();
         }
 
-        // Give every transporter def a CompDefaultCargo. Done in code (not an XML patch) so we
-        // read the fully inheritance-resolved comp list - this reliably catches vanilla pods and
-        // shuttles (which inherit CompProperties_Transporter from abstract bases) and modded
+        // Gives every transporter def a CompDefaultCargo. Done in code rather than an XML patch
+        // so it reads the fully inheritance-resolved comp list, which catches vanilla pods and
+        // shuttles (they inherit CompProperties_Transporter from abstract bases) and modded
         // craft alike. Runs before any save loads, so the comp is part of the def when
         // transporters re-initialize their comps on load.
         private static void InjectComps()
@@ -38,18 +37,16 @@ namespace TransporterLoadouts
         }
     }
 
-    // On open, pre-fill the transporter's saved default cargo into the item rows. Local UI only
-    // (the final Accept is vanilla-synced). Skipped when a load is already in progress / ready
-    // to launch, so we don't stomp an existing manifest the dialog restored.
+    // On open, pre-fills the transporter's saved default cargo into the item rows. Local UI only
+    // (the final Accept is vanilla-synced). Skipped when a load is already in progress or ready
+    // to launch, so the load the dialog restores is left as it is.
     [HarmonyPatch(typeof(Dialog_LoadTransporters), nameof(Dialog_LoadTransporters.PostOpen))]
     public static class Patch_LoadTransporters_PostOpen
     {
         public static void Postfix(Dialog_LoadTransporters __instance)
         {
-            List<CompTransporter> transporters = DialogAccess.Transporters(__instance);
-            if (transporters == null || transporters.Count == 0) return;
-            CompTransporter primary = transporters[0];
-            if (primary.LoadingInProgressOrReadyToLaunch) return;
+            CompTransporter primary = DialogAccess.PrimaryTransporter(__instance);
+            if (primary == null || primary.LoadingInProgressOrReadyToLaunch) return;
 
             CompDefaultCargo comp = primary.parent?.TryGetComp<CompDefaultCargo>();
             if (comp == null || !comp.HasManifest) return;
@@ -59,7 +56,7 @@ namespace TransporterLoadouts
         }
     }
 
-    // Draw the "Default cargo" header button (Items tab only).
+    // Draws the "Default cargo" header button (Items tab only).
     [HarmonyPatch(typeof(Dialog_LoadTransporters), nameof(Dialog_LoadTransporters.DoWindowContents))]
     public static class Patch_LoadTransporters_Header
     {

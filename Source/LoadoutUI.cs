@@ -18,12 +18,7 @@ namespace TransporterLoadouts
             if (!DialogAccess.OnItemsTab(dlg))
                 return;
 
-            List<CompTransporter> transporters = DialogAccess.Transporters(dlg);
-            if (transporters == null || transporters.Count == 0)
-                return;
-            // The default cargo is the primary transporter's manifest. Loading a whole group of
-            // pods through one dialog is uncommon; if it happens, the first pod's default drives.
-            Thing transporter = transporters[0].parent;
+            Thing transporter = DialogAccess.PrimaryTransporter(dlg)?.parent;
             CompDefaultCargo comp = transporter?.TryGetComp<CompDefaultCargo>();
             if (comp == null)
                 return;
@@ -52,12 +47,12 @@ namespace TransporterLoadouts
 
             if (comp.HasManifest)
             {
-                opts.Add(new FloatMenuOption("Fill default cargo (" + comp.Manifest.Count + " item type" + (comp.Manifest.Count == 1 ? "" : "s") + ")", () =>
+                opts.Add(new FloatMenuOption("Fill default cargo (" + comp.Manifest.Count + " item type" + PluralSuffix(comp.Manifest.Count) + ")", () =>
                 {
                     int shortfalls = LoadoutApplier.ApplyManifest(comp, transferables);
                     DialogAccess.NotifyCountsChanged(dlg);
                     if (shortfalls > 0)
-                        Messages.Message(shortfalls + " default item type" + (shortfalls == 1 ? "" : "s") + " couldn't be fully loaded (not enough on the map).",
+                        Messages.Message(shortfalls + " default item type" + PluralSuffix(shortfalls) + " couldn't be fully loaded (not enough on the map).",
                             MessageTypeDefOf.CautionInput, historical: false);
                 }));
             }
@@ -87,7 +82,7 @@ namespace TransporterLoadouts
             if (comp.HasManifest)
             {
                 Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
-                    "Overwrite the saved default cargo for " + transporter.LabelShortCap + " with the current selection (" + defs.Count + " item type" + (defs.Count == 1 ? "" : "s") + ")?",
+                    "Overwrite the saved default cargo for " + transporter.LabelShortCap + " with the current selection (" + defs.Count + " item type" + PluralSuffix(defs.Count) + ")?",
                     () => CargoActions.SetDefaultCargo(transporter, defs, counts)));
             }
             else
@@ -95,5 +90,7 @@ namespace TransporterLoadouts
                 CargoActions.SetDefaultCargo(transporter, defs, counts);
             }
         }
+
+        private static string PluralSuffix(int count) => count == 1 ? "" : "s";
     }
 }

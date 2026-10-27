@@ -7,7 +7,7 @@ using Verse;
 namespace TransporterLoadouts
 {
     // One saved cargo line: a ThingDef and how many of it this transporter wants by default.
-    // Its own IExposable so we don't depend on the exact scribe shape of a game class.
+    // A dedicated IExposable keeps the save format independent of any game class's scribe shape.
     public class CargoEntry : IExposable
     {
         public ThingDef def;
@@ -37,22 +37,21 @@ namespace TransporterLoadouts
     }
 
     // Per-transporter default cargo manifest, scribed with the building. Added to every
-    // ThingDef that has a CompTransporter at startup (see HarmonyPatches.InjectComps), so it
+    // ThingDef that has a CompTransporter at startup (see HarmonyBootstrap.InjectComps), so it
     // rides along on drop pods, shuttles and modded craft without an XML patch.
     public class CompDefaultCargo : ThingComp
     {
         private List<CargoEntry> manifest = new List<CargoEntry>();
 
-        // Auto-load override for THIS transporter. When autoLoadSet is false the effective state
-        // follows the mod-settings default for the current map type (and re-evaluates on a map
-        // change, because the override is cleared on a fresh spawn - see PostSpawnSetup).
+        // Auto-load override for this transporter. When autoLoadSet is false the effective state
+        // follows the mod-settings default for the current map type; the override is cleared on
+        // every fresh spawn (see PostSpawnSetup), so it re-evaluates after a change of map.
         private bool autoLoadSet;
         private bool autoLoad;
 
         public bool HasManifest => manifest != null && manifest.Count > 0;
         public IReadOnlyList<CargoEntry> Manifest => manifest;
 
-        // Effective "auto-load this transporter's default cargo" state.
         public bool AutoLoadActive => autoLoadSet ? autoLoad : MapDefault;
 
         private bool MapDefault
@@ -61,8 +60,8 @@ namespace TransporterLoadouts
             {
                 Map map = parent.MapHeld;
                 bool colony = map != null && map.IsPlayerHome;
-                // In multiplayer, mod settings are per-machine and would desync sim-tick
-                // auto-load, so use the fixed default (which is also the shipped default).
+                // Mod settings are per-machine and sim-tick auto-load reads this, so in
+                // multiplayer the fixed shipped default applies to keep clients in step.
                 if (MultiplayerCompat.InMultiplayer)
                     return colony;
                 TransporterLoadoutsSettings s = TransporterLoadoutsMod.Settings;
@@ -71,7 +70,7 @@ namespace TransporterLoadouts
             }
         }
 
-        // Called from the synced CargoActions.SetAutoLoad so it stays MP-consistent.
+        // Called only from the synced CargoActions.SetAutoLoad.
         public void SetAutoLoad(bool value)
         {
             autoLoadSet = true;
@@ -98,9 +97,9 @@ namespace TransporterLoadouts
         public override void PostSpawnSetup(bool respawningAfterLoad)
         {
             base.PostSpawnSetup(respawningAfterLoad);
-            // A genuine (re)spawn - built, or arrived on a new map after a flight - resets the
-            // override so the transporter follows this map type's default ("auto switch between
-            // maps"). A save reload (respawningAfterLoad) keeps the player's choice.
+            // A genuine spawn (built, or arrived on a new map after a flight) resets the
+            // override so the transporter follows this map type's default. A save reload keeps
+            // the player's choice.
             if (!respawningAfterLoad)
                 autoLoadSet = false;
         }
@@ -109,7 +108,7 @@ namespace TransporterLoadouts
         {
             base.CompTick();
             if (!parent.Spawned) return;
-            if (!parent.IsHashIntervalTick(250)) return; // ~4s; deterministic, MP-safe
+            if (!parent.IsHashIntervalTick(250)) return; // deterministic per-thing interval
             TryAutoLoad();
         }
 
@@ -134,6 +133,18 @@ namespace TransporterLoadouts
             try { sendable = TransporterUtility.AllSendableItems(group, map).ToList(); }
             catch { return; }
 
+            List<KeyValuePair<TransferableOneWay, int>> toAdd = BuildLoadList(sendable);
+            if (toAdd.Count == 0) return;
+
+            TransporterUtility.InitiateLoading(group);
+            foreach (KeyValuePair<TransferableOneWay, int> kv in toAdd)
+                trans.AddToTheToLoadList(kv.Key, kv.Value);
+        }
+
+        // One transferable per manifest line that has any matching sendable stock, paired with
+        // the count to load: the line's target, clamped to the stock available.
+        private List<KeyValuePair<TransferableOneWay, int>> BuildLoadList(List<Thing> sendable)
+        {
             List<KeyValuePair<TransferableOneWay, int>> toAdd = new List<KeyValuePair<TransferableOneWay, int>>();
             foreach (CargoEntry entry in manifest)
             {
@@ -152,11 +163,7 @@ namespace TransporterLoadouts
                 tow.things.AddRange(things);
                 toAdd.Add(new KeyValuePair<TransferableOneWay, int>(tow, want));
             }
-            if (toAdd.Count == 0) return;
-
-            TransporterUtility.InitiateLoading(group);
-            foreach (KeyValuePair<TransferableOneWay, int> kv in toAdd)
-                trans.AddToTheToLoadList(kv.Key, kv.Value);
+            return toAdd;
         }
 
         public override void PostExposeData()
