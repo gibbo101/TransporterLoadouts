@@ -38,12 +38,10 @@ namespace TransporterLoadouts
         internal static readonly AccessTools.FieldRef<CompTransporter, bool> MassDirtyRef =
             AccessTools.FieldRefAccess<CompTransporter, bool>("massUsageDirty");
 
-        private static Texture2D autoLoadIcon;
-        internal static Texture2D AutoLoadIcon =>
-            autoLoadIcon ??= ContentFinder<Texture2D>.Get("UI/Commands/AutoLoadDefaultCargo");
-        private static Texture2D cancelIcon;
-        internal static Texture2D CancelIcon =>
-            cancelIcon ??= ContentFinder<Texture2D>.Get("UI/Designators/Cancel");
+        // Looked up on use; ContentFinder caches each texture, so CancelIcon is the same instance
+        // vanilla gives its unload gizmo.
+        internal static Texture2D AutoLoadIcon => ContentFinder<Texture2D>.Get("UI/Commands/AutoLoadDefaultCargo");
+        internal static Texture2D CancelIcon => ContentFinder<Texture2D>.Get("UI/Designators/Cancel");
     }
 
     // Keeps the default cargo aboard when the player chose "unload all except default cargo".
